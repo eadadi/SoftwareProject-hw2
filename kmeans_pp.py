@@ -46,8 +46,17 @@ def read_file(path):
 def load_data(p1, p2):
     m1 = np.array(read_file(p1))
     m2 = np.array(read_file(p2))
-    print(m1)
-    print(m2)
+    df1 = pd.DataFrame(m1, index=[m1[i][0] for i in range(len(m1))])
+    df2 = pd.DataFrame(m2, index=[m2[i][0] for i in range(len(m1))])
+    df1 = df1.drop(0, axis=1)
+    df2 = df2.drop(0, axis=1)
+    frames = [df1, df2]
+    print(df1)
+    print(df2)
+    result = pd.concat(frames, join="inner", axis=1, )
+    print(result)
+    #print(df1[0])
+    #print(df2)
 
 
 def main():
