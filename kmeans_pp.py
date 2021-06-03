@@ -46,22 +46,66 @@ def read_file(path):
 def load_data(p1, p2):
     m1 = np.array(read_file(p1))
     m2 = np.array(read_file(p2))
+    
     df1 = pd.DataFrame(m1, index=[m1[i][0] for i in range(len(m1))])
     df2 = pd.DataFrame(m2, index=[m2[i][0] for i in range(len(m1))])
+    
     df1 = df1.drop(0, axis=1)
     df2 = df2.drop(0, axis=1)
-    frames = [df1, df2]
-    print(df1)
-    print(df2)
-    result = pd.concat(frames, join="inner", axis=1, )
-    print(result)
-    #print(df1[0])
-    #print(df2)
 
+    result = pd.concat([df1, df2], join="inner", axis=1, )
+
+    result.columns = ["1","2","3","4"]
+
+    d = result.to_numpy()
+    return d
+
+def select_initial(datapoints):
+    np.random.seed(0)
+    rand_index = np.random.choice(len(datapoints))
+    u1 = np.copy(datapoints[rand_index])
+    return u1
+
+def build_probabilities(D):
+    size = len(D)
+    probabilities = [0]*size
+    s = sum(D)
+    for i in range(size):
+        probabilities[i] = D[i]/s
+    return probabilities
+
+def distance(u, v):
+    res = 0
+    for i in range(len(u)):
+        res += (u[i] - v[i]) ** 2
+    return res
+
+def buildDi (data, u, Z, centroids):
+    res = distance(u, centroids[0])
+    for i in range(1,Z):
+        d = distance(u, centroids[i])
+        res = min(d, res)
+    return res
+
+def kmeanspp (datapoints, k):
+    initial_centroids = [0]*k
+    initial_centroids[0] = select_initial(datapoints)
+    Z = 1
+    while Z<k:
+        D = [0]*len(datapoints)
+        for i in range(len(datapoints)):
+            xi = np.copy(datapoints[i])
+            D[i] = buildDi(datapoints, xi, Z, initial_centroids)
+        probabilities = build_probabilities(D)
+        j = np.random.choice(len(datapoints),p=probabilities)
+        initial_centroids[Z] = np.copy(datapoints[j])
+        Z+=1
+    return initial_centroids
 
 def main():
     (k, max_iter, file_name1, file_name2) = input()
-    load_data(file_name1,file_name2)
+    data = load_data(file_name1,file_name2)
+    print(kmeanspp(data, k))
 
 
 main()
