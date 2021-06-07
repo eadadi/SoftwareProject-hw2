@@ -2,6 +2,17 @@ import sys
 import numpy as np
 import pandas as pd
 
+'''
+C Stuff
+'''
+import mykmeanssp as km
+km.fit(32,85,[4.4,9.2,1.1],[2.4,3.2,4.9])
+
+
+'''
+The code:
+'''
+
 def input():
     line = sys.argv
     if len(line) < 4 or len(line) > 5:
@@ -105,7 +116,7 @@ def kmeanspp (datapoints, k):
 def main():
     (k, max_iter, file_name1, file_name2) = input()
     data = load_data(file_name1,file_name2)
-    print(kmeanspp(data, k))
+    #print(kmeanspp(data, k))
 
 
 main()

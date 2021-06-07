@@ -1,7 +1,57 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <assert.h>
+#define PY_SSIZE_T_CLEAN
+#include<Python.h>
 #include <stdbool.h>
+/**
+ * Python Stuff
+ **/
+
+PyObject* py_kmean (Py_ssize_t , Py_ssize_t , PyObject* , PyObject* , Py_ssize_t );
+
+//Args (k, max_iter, initial centroids, data, data_len)
+static PyObject* fit(PyObject *self, PyObject *args){ 
+	//Args from python:
+	Py_ssize_t k,max_iter,data_len;
+	PyObject *initial_centroids, *data;
+	if(!PyArg_ParseTuple(args, "iiOO", &k, &max_iter, &initial_centroids, &data)) {
+		printf("I am here \n");
+		return NULL;
+	}
+	data_len = PyList_Size(data);
+	//printf("a+b = %ld , datalen = %ld\n ",k+max_iter, data_len);
+
+	
+	py_kmean(k, max_iter, initial_centroids, data, data_len);
+
+	return Py_BuildValue("i", k+10);
+}
+
+static PyMethodDef kmeansspMethods[] = {
+	{"fit",
+	(PyCFunction) fit,
+	METH_VARARGS,
+	PyDoc_STR("The link between my python code and c code EA15")},
+	{NULL,NULL,0,NULL}
+};
+
+static struct PyModuleDef moduledef = {
+	PyModuleDef_HEAD_INIT,
+	"mykmeanssp",
+	NULL,
+	-1,
+	kmeansspMethods
+};
+
+PyMODINIT_FUNC
+PyInit_mykmeanssp(void) {
+	PyObject *m;
+	m = PyModule_Create(&moduledef);
+	if (!m) return NULL;
+	return m;
+}
+
+/**
+ * Code itself
+ **/
 void printArr (double * arr, int s) {
 	int i;
 	for (i=0; i<s; ++i) {
@@ -215,6 +265,7 @@ double distance(double * u, double * v, int dim) {
 	return res;
 }
 
+
 void add (double *** si, double *u,int * bound, int *cnt){
 	int lim, i;
 	double **b;
@@ -270,7 +321,7 @@ void Result (double **m, int k, int dim){
 	}
 }
 
-void k_mean(int k, int max_iter, double ** x, int mat_len, int dim){
+double** k_mean(int k, int max_iter, double ** x, int mat_len, int dim){
 	double **m;
 	double ***s, min_dis, temp, *temp_cent;
 	int init, *bounds, *counts, argmin, i, j;
@@ -322,13 +373,29 @@ void k_mean(int k, int max_iter, double ** x, int mat_len, int dim){
 		free(s);
 	}
 	
-	Result(m, k, dim);
+	
 
 	free(counts);free(bounds);
-	for(i=0;i<k;++i) free(m[i]);
-	free(m);
+	//for(i=0;i<k;++i) free(m[i]);
+	//free(m);
 	for (i=0;i<mat_len; ++i) free(x[i]);
-	printf("Good Job!\n");
+	
+	//Result(m, k, dim);
+	return m;
+	
+}
+
+//FROM HERE:
+PyObject* py_kmean (Py_ssize_t k, Py_ssize_t max_iter, PyObject* initialCents, PyObject* data, Py_ssize_t data_len){
+	PyObject *result = PyList_New(k);
+	for (int i=0; i<3; ++i) {
+		PyObject *index = PyLong_FromSsize_t(i);
+		PyList_SetItem(result,index,index);
+}
+	printf("??\n");
+	long l;
+	PyArg_Parse(PyList_Size(result), "l",&l);
+	return result;
 }
 
 int main(int argc, char* argv []){
