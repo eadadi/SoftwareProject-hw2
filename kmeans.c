@@ -4,25 +4,80 @@
 /**
  * Python Stuff
  **/
-
-PyObject* py_kmean (Py_ssize_t , Py_ssize_t , PyObject* , PyObject* , Py_ssize_t );
-
-//Args (k, max_iter, initial centroids, data, data_len)
+void k_mean(int , int ,double** , double ** , int , int );
 static PyObject* fit(PyObject *self, PyObject *args){ 
 	//Args from python:
-	Py_ssize_t k,max_iter,data_len;
+	int k,max_iter,data_len,vector_len;
 	PyObject *initial_centroids, *data;
-	if(!PyArg_ParseTuple(args, "iiOO", &k, &max_iter, &initial_centroids, &data)) {
-		printf("I am here \n");
-		return NULL;
-	}
-	data_len = PyList_Size(data);
-	//printf("a+b = %ld , datalen = %ld\n ",k+max_iter, data_len);
-
+	PyArg_ParseTuple(args, "iiiiOO", &k,&max_iter,&data_len,&vector_len,&initial_centroids,&data);
+	printf("k=%d max_iter=%d datalen=%d, vectorlen=%d\n",k,max_iter,data_len,vector_len);
 	
-	py_kmean(k, max_iter, initial_centroids, data, data_len);
+	Py_ssize_t i, j;
+	
+	//Define C initial_centroids vector:
+	double** c_initials = (double**)calloc(k,sizeof(double*));
+	for (i=0; i<k; ++i){
+		c_initials[i]= (double*)calloc(vector_len,sizeof(double));
+	}
+	//Build C initials_centroids vector
+	for (i=0; i<k; ++i){
+		PyObject *vector = PyList_GetItem(initial_centroids, i);
+		if (!PyList_Check(vector)) printf("$$$ bug1\n");
+		for (j=0; j<vector_len; ++j){
+			PyObject* coordinate = PyList_GetItem(vector, j);
+			PyArg_Parse(coordinate, "d", &c_initials[i][j]);
+		}
+	}
 
-	return Py_BuildValue("i", k+10);
+	//Define C data Matrice:
+	double** c_data = (double**)calloc(data_len,sizeof(double*));
+	for (i=0; i<data_len; ++i){
+		c_data[i]= (double*)calloc(vector_len,sizeof(double));
+	}
+	//Build C data matrice:
+	for (i=0; i<data_len; ++i){
+		PyObject *vector = PyList_GetItem(data, i);
+		if (!PyList_Check(vector)) printf("$$$ bug1\n");
+		for (j=0; j<vector_len; ++j){
+			PyObject* coordinate = PyList_GetItem(vector, j);
+			PyArg_Parse(coordinate, "d", &c_data[i][j]);
+		}
+	}
+	
+	//Run kmeans (It modifies c_initials to the final result)
+	/*printf("Before:\n");
+	for(int i1=0;i1<k;i1++)
+		{
+			for(int j1=0;j1<vector_len;j1++) printf("%lf ", c_initials[i1][j1]);
+			printf("\n");
+		}*/
+	k_mean(k, max_iter, c_initials, c_data, data_len, vector_len);
+	printf("After:\n");
+	for(int i1=0;i1<k;i1++)
+		{
+			for(int j1=0;j1<vector_len;j1++) printf("%lf ", c_initials[i1][j1]);
+			printf("\n");
+		}
+
+	//Modify "initials" (which is pyobject) to hold the result:
+	PyObject* result = PyList_New(PyList_Size(initial_centroids));
+	if (!PyList_Check(result)) printf("bug2!!!\n");
+	for (i=0; i<k; ++i){
+		double* line = c_initials[i];
+		PyObject *vector = PyList_New(vector_len);
+		PyList_SetItem(result, i, vector);
+		for (j=0; j<vector_len; ++j){
+			PyObject* value;
+			value = Py_BuildValue("d", line[j]);
+			PyList_SetItem(vector, j, value);
+		}
+	}
+
+	//free c_data & c_initials
+	for (i=0; i<k; ++i) free(c_initials[i]);
+	for (i=0; i<data_len; ++i) free(c_data[i]);
+	free(c_initials);free(c_data);
+    return result;
 }
 
 static PyMethodDef kmeansspMethods[] = {
@@ -321,13 +376,13 @@ void Result (double **m, int k, int dim){
 	}
 }
 
-double** k_mean(int k, int max_iter, double ** x, int mat_len, int dim){
-	double **m;
+void k_mean(int k, int max_iter,double** initials, double ** data, int mat_len, int dim){
+	double** x = data;
+	double **m = initials;
 	double ***s, min_dis, temp, *temp_cent;
 	int init, *bounds, *counts, argmin, i, j;
 	bool changed =true;
 
-	m = slice(k, x, dim);
 	init = 128;
 	changed = true;
 
@@ -378,24 +433,10 @@ double** k_mean(int k, int max_iter, double ** x, int mat_len, int dim){
 	free(counts);free(bounds);
 	//for(i=0;i<k;++i) free(m[i]);
 	//free(m);
-	for (i=0;i<mat_len; ++i) free(x[i]);
+	//for (i=0;i<mat_len; ++i) free(x[i]);
 	
 	//Result(m, k, dim);
-	return m;
-	
-}
-
-//FROM HERE:
-PyObject* py_kmean (Py_ssize_t k, Py_ssize_t max_iter, PyObject* initialCents, PyObject* data, Py_ssize_t data_len){
-	PyObject *result = PyList_New(k);
-	for (int i=0; i<3; ++i) {
-		PyObject *index = PyLong_FromSsize_t(i);
-		PyList_SetItem(result,index,index);
-}
-	printf("??\n");
-	long l;
-	PyArg_Parse(PyList_Size(result), "l",&l);
-	return result;
+	//return m;
 }
 
 int main(int argc, char* argv []){
@@ -421,7 +462,7 @@ int main(int argc, char* argv []){
 	mat = readLines(f, &mat_len, &dim);
 	assert (max_iter>=0 && mat_len>=k);
 
-	k_mean(k, max_iter, mat, mat_len, dim);
+	//k_mean(k, max_iter, mat, mat_len, dim);
 
 	for (i=0;i<mat_len;i++) free(mat[i]);
 	
