@@ -131,8 +131,9 @@ def kmeanspp(datapoints, k):
 
 
 def arr_to_str(arr):
+    # arr = [num1, num2, ...] -> [str(num1), str(num2), ...]
     lst = [str(x) for x in arr]
-    res = " ".join(lst)
+    res = ",".join(lst)
     return res
 
 
@@ -144,18 +145,17 @@ def main():
     (initial_indexes, initial_vectors) = kmeanspp(data, k)
 
     result = km.fit(k, max_iter, data_len, vector_len, initial_vectors, data.tolist())
-
     round_result = np.round(result, 4)
 
-    # print(initial_indexes)
-    # print(result)
+    #print(initial_indexes)
     #print(initial_indexes)
     #print(round_result)
 
     print(arr_to_str(initial_indexes))
-    for line in round_result:
-        print(arr_to_str(line))
-
-
+    for i in range(len(result)):
+        if i == len(result)-1:
+            print(arr_to_str(round_result[i]), end = "")
+        else:
+            print(arr_to_str(round_result[i]))
 
 main()
