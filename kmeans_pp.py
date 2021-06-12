@@ -65,7 +65,7 @@ def load_data(p1, p2):
 
     result = pd.concat([df2, df1], join="inner", axis=1 )
     result = result.sort_index()
-    print(result)
+    #print(result)
 
     #result.columns = ["1","2","3","4"]
 
@@ -124,12 +124,16 @@ def main():
     data = load_data(file_name1,file_name2)
     data_len = len(data)
     vector_len = len(data[0])
-    (initial_indexes, initial_vectors) = kmeanspp(data,k)
+    (initial_indexes, initial_vectors) = kmeanspp(data, k)
     
     result = km.fit(k, max_iter, data_len, vector_len, initial_vectors, data.tolist())
 
+    round_result = np.round(result, 4)
+
+    #print(initial_indexes)
+    #print(result)
+
     print(initial_indexes)
-    print(result)
-    
+    print(round_result)
 
 main()

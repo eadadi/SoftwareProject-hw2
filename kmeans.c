@@ -10,7 +10,7 @@ static PyObject* fit(PyObject *self, PyObject *args){
 	int k,max_iter,data_len,vector_len;
 	PyObject *initial_centroids, *data;
 	PyArg_ParseTuple(args, "iiiiOO", &k,&max_iter,&data_len,&vector_len,&initial_centroids,&data);
-	printf("k=%d max_iter=%d datalen=%d, vectorlen=%d\n",k,max_iter,data_len,vector_len);
+	//printf("k=%d max_iter=%d datalen=%d, vectorlen=%d\n",k,max_iter,data_len,vector_len);
 	
 	Py_ssize_t i, j;
 	
@@ -52,13 +52,16 @@ static PyObject* fit(PyObject *self, PyObject *args){
 			printf("\n");
 		}*/
 	k_mean(k, max_iter, c_initials, c_data, data_len, vector_len);
-	printf("After:\n");
+	//printf("After:\n");
+
+	/*
 	for(int i1=0;i1<k;i1++)
 		{
 			for(int j1=0;j1<vector_len;j1++) printf("%lf ", c_initials[i1][j1]);
 			printf("\n");
 		}
-
+	*/
+	
 	//Modify "initials" (which is pyobject) to hold the result:
 	PyObject* result = PyList_New(PyList_Size(initial_centroids));
 	if (!PyList_Check(result)) printf("bug2!!!\n");
